@@ -76,9 +76,9 @@ const RecentActivity = () => {
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
       
       <div className="space-y-4">
-        {activities.map((activity, index) => (
+{activities.map((activity, index) => (
           <motion.div
-            key={activity.id}
+            key={activity.id ? `${activity.type || 'activity'}-${activity.id}` : `fallback-${index}`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}

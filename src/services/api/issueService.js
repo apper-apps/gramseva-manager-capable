@@ -1,90 +1,335 @@
-import issuesData from "@/services/mockData/issues.json";
-
-let issues = [...issuesData];
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { toast } from "react-toastify";
 
 export const issueService = {
   async getAll() {
-    await delay(300);
-    return [...issues];
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "Owner" } },
+          { field: { Name: "CreatedOn" } },
+          { field: { Name: "CreatedBy" } },
+          { field: { Name: "ModifiedOn" } },
+          { field: { Name: "ModifiedBy" } },
+          { field: { Name: "category" } },
+          { field: { Name: "title" } },
+          { field: { Name: "description" } },
+          { field: { Name: "priority" } },
+          { field: { Name: "status" } },
+          { field: { Name: "reporterId" } },
+          { field: { Name: "reporterName" } },
+          { field: { Name: "assigneeId" } },
+          { field: { Name: "assigneeName" } },
+          { field: { Name: "ward" } },
+          { field: { Name: "street" } },
+          { field: { Name: "dueDate" } },
+          { field: { Name: "comments" } }
+        ],
+        orderBy: [{ fieldName: "CreatedOn", sorttype: "DESC" }]
+      };
+
+      const response = await apperClient.fetchRecords("issue", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return [];
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching issues:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return [];
+    }
   },
 
   async getById(id) {
-    await delay(200);
-    const issue = issues.find(i => i.Id === parseInt(id));
-    if (!issue) {
-      throw new Error("Issue not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "Owner" } },
+          { field: { Name: "CreatedOn" } },
+          { field: { Name: "CreatedBy" } },
+          { field: { Name: "ModifiedOn" } },
+          { field: { Name: "ModifiedBy" } },
+          { field: { Name: "category" } },
+          { field: { Name: "title" } },
+          { field: { Name: "description" } },
+          { field: { Name: "priority" } },
+          { field: { Name: "status" } },
+          { field: { Name: "reporterId" } },
+          { field: { Name: "reporterName" } },
+          { field: { Name: "assigneeId" } },
+          { field: { Name: "assigneeName" } },
+          { field: { Name: "ward" } },
+          { field: { Name: "street" } },
+          { field: { Name: "dueDate" } },
+          { field: { Name: "comments" } }
+        ]
+      };
+
+      const response = await apperClient.getRecordById("issue", id, params);
+
+      if (!response || !response.data) {
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error(`Error fetching issue with ID ${id}:`, error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    return { ...issue };
   },
 
   async create(issueData) {
-    await delay(400);
-    const maxId = Math.max(...issues.map(i => i.Id), 0);
-    const newIssue = {
-      Id: maxId + 1,
-      ...issueData,
-      status: "Open",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      comments: []
-    };
-    issues.push(newIssue);
-    return { ...newIssue };
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      // Only include Updateable fields
+      const updateableData = {
+        Name: issueData.title || issueData.Name,
+        Tags: issueData.Tags || "",
+        Owner: issueData.Owner,
+        category: issueData.category,
+        title: issueData.title,
+        description: issueData.description,
+        priority: issueData.priority,
+        status: issueData.status || "Open",
+        reporterId: issueData.reporterId,
+        reporterName: issueData.reporterName,
+        assigneeId: issueData.assigneeId,
+        assigneeName: issueData.assigneeName,
+        ward: issueData.ward,
+        street: issueData.street,
+        dueDate: issueData.dueDate,
+        comments: issueData.comments || ""
+      };
+
+      const params = {
+        records: [updateableData]
+      };
+
+      const response = await apperClient.createRecord("issue", params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulRecords = response.results.filter(result => result.success);
+        const failedRecords = response.results.filter(result => !result.success);
+
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create issue ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          
+          failedRecords.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulRecords.length > 0) {
+          return successfulRecords[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error creating issue:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
+    }
   },
 
   async update(id, issueData) {
-    await delay(350);
-    const index = issues.findIndex(i => i.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Issue not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      // Only include Updateable fields
+      const updateableData = {
+        Id: parseInt(id),
+        Name: issueData.title || issueData.Name,
+        Tags: issueData.Tags,
+        Owner: issueData.Owner,
+        category: issueData.category,
+        title: issueData.title,
+        description: issueData.description,
+        priority: issueData.priority,
+        status: issueData.status,
+        reporterId: issueData.reporterId,
+        reporterName: issueData.reporterName,
+        assigneeId: issueData.assigneeId,
+        assigneeName: issueData.assigneeName,
+        ward: issueData.ward,
+        street: issueData.street,
+        dueDate: issueData.dueDate,
+        comments: issueData.comments
+      };
+
+      const params = {
+        records: [updateableData]
+      };
+
+      const response = await apperClient.updateRecord("issue", params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update issue ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+          
+          failedUpdates.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulUpdates.length > 0) {
+          return successfulUpdates[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error updating issue:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    issues[index] = {
-      ...issues[index],
-      ...issueData,
-      updatedAt: new Date().toISOString()
-    };
-    return { ...issues[index] };
   },
 
   async delete(id) {
-    await delay(250);
-    const index = issues.findIndex(i => i.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Issue not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await apperClient.deleteRecord("issue", params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successfulDeletions = response.results.filter(result => result.success);
+        const failedDeletions = response.results.filter(result => !result.success);
+
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete issue ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+          
+          failedDeletions.forEach(record => {
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        return successfulDeletions.length > 0;
+      }
+
+      return false;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error deleting issue:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return false;
     }
-    const deleted = issues.splice(index, 1)[0];
-    return { ...deleted };
   },
 
   async updateStatus(id, status) {
-    await delay(300);
-    const index = issues.findIndex(i => i.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Issue not found");
+    try {
+      return await this.update(id, { status });
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error updating issue status:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    issues[index] = {
-      ...issues[index],
-      status,
-      updatedAt: new Date().toISOString()
-    };
-    return { ...issues[index] };
   },
 
   async addComment(id, comment) {
-    await delay(250);
-    const index = issues.findIndex(i => i.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Issue not found");
+    try {
+      // For now, we'll update the comments field
+      // In a full implementation, comments might be a separate table
+      const currentIssue = await this.getById(id);
+      if (!currentIssue) {
+        throw new Error("Issue not found");
+      }
+
+      const currentComments = currentIssue.comments || "";
+      const newComment = `${currentComments}\n${comment.author}: ${comment.message} (${new Date().toISOString()})`;
+      
+      return await this.update(id, { comments: newComment });
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error adding comment:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    const newComment = {
-      id: Date.now(),
-      ...comment,
-      timestamp: new Date().toISOString()
-    };
-    issues[index].comments.push(newComment);
-    issues[index].updatedAt = new Date().toISOString();
-    return { ...issues[index] };
   }
 };

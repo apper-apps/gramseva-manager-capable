@@ -43,10 +43,10 @@ const Activities = () => {
     let filtered = activities;
 
     if (searchTerm) {
-      filtered = filtered.filter(activity =>
-        activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        activity.organizerName.toLowerCase().includes(searchTerm.toLowerCase())
+filtered = filtered.filter(activity =>
+        activity.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        activity.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        activity.organizerName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -232,10 +232,14 @@ const Activities = () => {
                     </div>
 
                     <div className="border-t border-gray-100 pt-3 mt-4">
-                      <div className="flex items-center justify-between text-sm">
+<div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Attendees</span>
                         <span className="font-medium text-primary">
-                          {activity.attendeeIds.length}{activity.maxParticipants ? `/${activity.maxParticipants}` : ''}
+                          {activity.attendeeIds ? 
+                            (typeof activity.attendeeIds === 'string' ? 
+                              activity.attendeeIds.split(',').filter(id => id.trim()).length : 
+                              activity.attendeeIds.length) : 0}
+                          {activity.maxParticipants ? `/${activity.maxParticipants}` : ''}
                         </span>
                       </div>
                     </div>
@@ -275,9 +279,12 @@ const Activities = () => {
                               <ApperIcon name="MapPin" size={14} />
                               <span>{activity.location}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+<div className="flex items-center gap-1">
                               <ApperIcon name="Users" size={14} />
-                              <span>{activity.attendeeIds.length} attended</span>
+                              <span>{activity.attendeeIds ? 
+                                (typeof activity.attendeeIds === 'string' ? 
+                                  activity.attendeeIds.split(',').filter(id => id.trim()).length : 
+                                  activity.attendeeIds.length) : 0} attended</span>
                             </div>
                           </div>
                         </div>

@@ -46,12 +46,12 @@ const Residents = () => {
   useEffect(() => {
     let filtered = residents;
 
-    if (searchTerm) {
+if (searchTerm) {
       filtered = filtered.filter(resident =>
-        resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resident.houseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resident.occupation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resident.familyId.toLowerCase().includes(searchTerm.toLowerCase())
+        resident.Name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        resident.houseNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        resident.occupation?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        resident.familyId?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -199,13 +199,13 @@ const Residents = () => {
                     className="hover:bg-gray-50 transition-colors duration-200"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
+<div className="flex items-center">
                         <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold">
-                          {resident.name.charAt(0)}
+                          {resident.Name?.charAt(0)}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {resident.name}
+                            {resident.Name}
                           </div>
                           <div className="text-sm text-gray-500">
                             Age: {resident.age} • {resident.gender}

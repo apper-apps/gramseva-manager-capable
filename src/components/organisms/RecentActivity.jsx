@@ -22,32 +22,31 @@ const RecentActivity = () => {
         activityService.getAll()
       ]);
 
-      const recentIssues = issues
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+const recentIssues = issues
+        .sort((a, b) => new Date(b.ModifiedOn || b.CreatedOn) - new Date(a.ModifiedOn || a.CreatedOn))
         .slice(0, 3)
         .map(issue => ({
           id: issue.Id,
           type: "issue",
           title: issue.title,
           description: `Issue reported: ${issue.category}`,
-          timestamp: issue.updatedAt,
+          timestamp: issue.ModifiedOn || issue.CreatedOn,
           icon: "AlertCircle",
           color: issue.status === "Resolved" ? "text-green-600" : "text-red-600"
         }));
 
-      const recentEvents = events
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+const recentEvents = events
+        .sort((a, b) => new Date(b.CreatedOn) - new Date(a.CreatedOn))
         .slice(0, 2)
         .map(event => ({
           id: event.Id,
           type: "activity",
           title: event.title,
           description: `${event.type} scheduled`,
-          timestamp: event.createdAt,
+          timestamp: event.CreatedOn,
           icon: "Calendar",
           color: "text-blue-600"
         }));
-
       const combined = [...recentIssues, ...recentEvents]
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
         .slice(0, 5);

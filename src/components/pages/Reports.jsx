@@ -29,7 +29,7 @@ const Reports = () => {
         activityService.getAll()
       ]);
 
-      // Calculate demographics
+// Calculate demographics
       const demographics = residents.reduce((acc, resident) => {
         acc.total++;
         acc.male += resident.gender === "Male" ? 1 : 0;

@@ -1,83 +1,351 @@
-import activitiesData from "@/services/mockData/activities.json";
-
-let activities = [...activitiesData];
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { toast } from "react-toastify";
 
 export const activityService = {
   async getAll() {
-    await delay(300);
-    return [...activities];
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "Owner" } },
+          { field: { Name: "CreatedOn" } },
+          { field: { Name: "CreatedBy" } },
+          { field: { Name: "ModifiedOn" } },
+          { field: { Name: "ModifiedBy" } },
+          { field: { Name: "title" } },
+          { field: { Name: "type" } },
+          { field: { Name: "description" } },
+          { field: { Name: "date" } },
+          { field: { Name: "time" } },
+          { field: { Name: "endTime" } },
+          { field: { Name: "location" } },
+          { field: { Name: "organizerId" } },
+          { field: { Name: "organizerName" } },
+          { field: { Name: "maxParticipants" } },
+          { field: { Name: "attendeeIds" } },
+          { field: { Name: "status" } }
+        ],
+        orderBy: [{ fieldName: "date", sorttype: "DESC" }]
+      };
+
+      const response = await apperClient.fetchRecords("app_Activity", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return [];
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching activities:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return [];
+    }
   },
 
   async getById(id) {
-    await delay(200);
-    const activity = activities.find(a => a.Id === parseInt(id));
-    if (!activity) {
-      throw new Error("Activity not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "Owner" } },
+          { field: { Name: "CreatedOn" } },
+          { field: { Name: "CreatedBy" } },
+          { field: { Name: "ModifiedOn" } },
+          { field: { Name: "ModifiedBy" } },
+          { field: { Name: "title" } },
+          { field: { Name: "type" } },
+          { field: { Name: "description" } },
+          { field: { Name: "date" } },
+          { field: { Name: "time" } },
+          { field: { Name: "endTime" } },
+          { field: { Name: "location" } },
+          { field: { Name: "organizerId" } },
+          { field: { Name: "organizerName" } },
+          { field: { Name: "maxParticipants" } },
+          { field: { Name: "attendeeIds" } },
+          { field: { Name: "status" } }
+        ]
+      };
+
+      const response = await apperClient.getRecordById("app_Activity", id, params);
+
+      if (!response || !response.data) {
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error(`Error fetching activity with ID ${id}:`, error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    return { ...activity };
   },
 
   async create(activityData) {
-    await delay(400);
-    const maxId = Math.max(...activities.map(a => a.Id), 0);
-    const newActivity = {
-      Id: maxId + 1,
-      ...activityData,
-      attendeeIds: [],
-      status: "Upcoming",
-      createdAt: new Date().toISOString()
-    };
-    activities.push(newActivity);
-    return { ...newActivity };
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      // Only include Updateable fields
+      const updateableData = {
+        Name: activityData.title || activityData.Name,
+        Tags: activityData.Tags || "",
+        Owner: activityData.Owner,
+        title: activityData.title,
+        type: activityData.type,
+        description: activityData.description,
+        date: activityData.date,
+        time: activityData.time,
+        endTime: activityData.endTime,
+        location: activityData.location,
+        organizerId: activityData.organizerId,
+        organizerName: activityData.organizerName,
+        maxParticipants: activityData.maxParticipants,
+        attendeeIds: activityData.attendeeIds || "",
+        status: activityData.status || "Upcoming"
+      };
+
+      const params = {
+        records: [updateableData]
+      };
+
+      const response = await apperClient.createRecord("app_Activity", params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulRecords = response.results.filter(result => result.success);
+        const failedRecords = response.results.filter(result => !result.success);
+
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create activity ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          
+          failedRecords.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulRecords.length > 0) {
+          return successfulRecords[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error creating activity:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
+    }
   },
 
   async update(id, activityData) {
-    await delay(350);
-    const index = activities.findIndex(a => a.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Activity not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      // Only include Updateable fields
+      const updateableData = {
+        Id: parseInt(id),
+        Name: activityData.title || activityData.Name,
+        Tags: activityData.Tags,
+        Owner: activityData.Owner,
+        title: activityData.title,
+        type: activityData.type,
+        description: activityData.description,
+        date: activityData.date,
+        time: activityData.time,
+        endTime: activityData.endTime,
+        location: activityData.location,
+        organizerId: activityData.organizerId,
+        organizerName: activityData.organizerName,
+        maxParticipants: activityData.maxParticipants,
+        attendeeIds: activityData.attendeeIds,
+        status: activityData.status
+      };
+
+      const params = {
+        records: [updateableData]
+      };
+
+      const response = await apperClient.updateRecord("app_Activity", params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update activity ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+          
+          failedUpdates.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulUpdates.length > 0) {
+          return successfulUpdates[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error updating activity:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    activities[index] = {
-      ...activities[index],
-      ...activityData,
-      updatedAt: new Date().toISOString()
-    };
-    return { ...activities[index] };
   },
 
   async delete(id) {
-    await delay(250);
-    const index = activities.findIndex(a => a.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Activity not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await apperClient.deleteRecord("app_Activity", params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successfulDeletions = response.results.filter(result => result.success);
+        const failedDeletions = response.results.filter(result => !result.success);
+
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete activity ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+          
+          failedDeletions.forEach(record => {
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        return successfulDeletions.length > 0;
+      }
+
+      return false;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error deleting activity:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return false;
     }
-    const deleted = activities.splice(index, 1)[0];
-    return { ...deleted };
   },
 
   async addAttendee(id, residentId) {
-    await delay(200);
-    const index = activities.findIndex(a => a.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Activity not found");
+    try {
+      const currentActivity = await this.getById(id);
+      if (!currentActivity) {
+        throw new Error("Activity not found");
+      }
+
+      // Parse current attendee IDs (stored as comma-separated string)
+      const currentAttendees = currentActivity.attendeeIds ? 
+        currentActivity.attendeeIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
+
+      if (!currentAttendees.includes(parseInt(residentId))) {
+        currentAttendees.push(parseInt(residentId));
+      }
+
+      // Store as comma-separated string
+      const updatedAttendeeIds = currentAttendees.join(',');
+      
+      return await this.update(id, { attendeeIds: updatedAttendeeIds });
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error adding attendee:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    if (!activities[index].attendeeIds.includes(parseInt(residentId))) {
-      activities[index].attendeeIds.push(parseInt(residentId));
-    }
-    return { ...activities[index] };
   },
 
   async removeAttendee(id, residentId) {
-    await delay(200);
-    const index = activities.findIndex(a => a.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Activity not found");
+    try {
+      const currentActivity = await this.getById(id);
+      if (!currentActivity) {
+        throw new Error("Activity not found");
+      }
+
+      // Parse current attendee IDs (stored as comma-separated string)
+      const currentAttendees = currentActivity.attendeeIds ? 
+        currentActivity.attendeeIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
+
+      const updatedAttendees = currentAttendees.filter(attendeeId => attendeeId !== parseInt(residentId));
+
+      // Store as comma-separated string
+      const updatedAttendeeIds = updatedAttendees.join(',');
+      
+      return await this.update(id, { attendeeIds: updatedAttendeeIds });
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error removing attendee:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    activities[index].attendeeIds = activities[index].attendeeIds.filter(
-      id => id !== parseInt(residentId)
-    );
-    return { ...activities[index] };
   }
 };

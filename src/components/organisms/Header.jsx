@@ -19,12 +19,22 @@ const Header = ({ title, village = "Gram Panchayat", onMenuToggle }) => {
             <p className="text-sm text-gray-600">{village}</p>
           </div>
         </div>
-
-        <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
             <ApperIcon name="MapPin" size={16} />
             <span>{village}</span>
           </div>
+          
+          <button
+            onClick={() => {
+              const { ApperUI } = window.ApperSDK;
+              ApperUI.logout();
+            }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <ApperIcon name="LogOut" size={16} />
+            <span>Logout</span>
+          </button>
           
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
             <ApperIcon name="User" size={16} className="text-white" />

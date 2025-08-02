@@ -44,20 +44,24 @@ const Families = () => {
     let filtered = families;
 
     if (searchTerm) {
-      filtered = filtered.filter(family =>
-        family.familyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        family.familyId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        family.ward.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        family.street.toLowerCase().includes(searchTerm.toLowerCase())
+filtered = filtered.filter(family =>
+        family.familyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        family.familyId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        family.ward?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        family.street?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     setFilteredFamilies(filtered);
   }, [families, searchTerm]);
 
-  const getFamilyMembers = (family) => {
+const getFamilyMembers = (family) => {
+    if (!family.memberIds) return [];
+    const memberIdArray = typeof family.memberIds === 'string' ? 
+      family.memberIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : 
+      family.memberIds;
     return residents.filter(resident => 
-      family.memberIds.includes(resident.Id)
+      memberIdArray.includes(resident.Id)
     );
   };
 
@@ -152,10 +156,10 @@ const Families = () => {
                     <span>{familyMembers.length} member{familyMembers.length !== 1 ? 's' : ''}</span>
                   </div>
 
-                  {familyHead && (
+{familyHead && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <ApperIcon name="Crown" size={14} />
-                      <span>Head: {familyHead.name}</span>
+                      <span>Head: {familyHead.Name}</span>
                     </div>
                   )}
                 </div>
@@ -163,9 +167,9 @@ const Families = () => {
                 <div className="border-t border-gray-100 pt-4">
                   <h4 className="text-sm font-medium text-gray-900 mb-2">Family Members</h4>
                   <div className="space-y-2">
-                    {familyMembers.slice(0, 3).map((member) => (
+{familyMembers.slice(0, 3).map((member) => (
                       <div key={member.Id} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-700">{member.name}</span>
+                        <span className="text-gray-700">{member.Name}</span>
                         <span className="text-gray-500 capitalize">{member.familyRole}</span>
                       </div>
                     ))}

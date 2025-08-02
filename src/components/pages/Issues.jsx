@@ -46,11 +46,11 @@ const Issues = () => {
   useEffect(() => {
     let filtered = issues;
 
-    if (searchTerm) {
+if (searchTerm) {
       filtered = filtered.filter(issue =>
-        issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        issue.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        issue.reporterName.toLowerCase().includes(searchTerm.toLowerCase())
+        issue.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        issue.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        issue.reporterName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
